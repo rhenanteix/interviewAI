@@ -1,14 +1,15 @@
 {
-  "name": "interview-copilot-pro",
+  "name": "interviewia",
   "private": true,
   "scripts": {
-    "dev": "npm run dev --workspace @copilot/api & npm run dev --workspace @copilot/web & wait",
+    "dev": "concurrently -k -n api,console,landing \"npm run dev -w @copilot/api\" \"npm run dev -w @copilot/web\" \"npm run dev -w @copilot/landing\"",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "concurrently": "^9.2.0"
   },
   "workspaces": [
     "apps/*",

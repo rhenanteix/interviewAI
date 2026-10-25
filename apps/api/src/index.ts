@@ -2,20 +2,30 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
 import { randomUUID } from 'node:crypto';
+import jwt from 'jsonwebtoken';
 import {registerPlatform} from './platform.js';
 import {registerAudioStream} from './audio-stream.js';
 import { input } from '@copilot/shared';
 import { MockLlm,processTurn } from './pipeline.js';
 import { AnthropicProvider } from './provider.js';
-const app=Fastify({logger:true});await app.register(cors,{origin:['http://localhost:5173']});await app.register(websocket);await registerPlatform(app);registerAudioStream(app);
-const tickets=new Map<string,number>();const llm=process.env.ANTHROPIC_API_KEY?new AnthropicProvider():new MockLlm();
+if(!process.env.JWT_SECRET||process.env.JWT_SECRET.length<32)throw new Error('JWT_SECRET must be configured with at least 32 characters');
+const app=Fastify({logger:true});await app.register(cors,{origin:(process.env.CORS_ORIGINS||'http://localhost:5173,http://localhost:5174').split(',')});await app.register(websocket);await registerPlatform(app);registerAudioStream(app);
+const tickets=new Map<string,{expires:number,userId:string}>();const llm=process.env.ANTHROPIC_API_KEY?new AnthropicProvider():new MockLlm();
 const demo=!process.env.ANTHROPIC_API_KEY;
 app.get('/health',async()=>({status:'ok',mode:demo?'demo':'anthropic',time:new Date().toISOString()}));
-app.get('/ready',async()=>({ready:true,dependencies:'not_checked',mode:'demo'}));
-app.post('/v1/ws-ticket',async(_request,reply)=>{for(const [k,v] of tickets)if(v<Date.now())tickets.delete(k);if(tickets.size>1000)return reply.code(429).send({error:'Too many pending tickets'});const ticket=randomUUID();tickets.set(ticket,Date.now()+30000);reply.send({ticket,expires_in:30})});
+app.get('/ready',async(_req,reply)=>{const ok=Boolean(process.env.JWT_SECRET&&process.env.JWT_SECRET.length>=32);if(!ok)return reply.code(503).send({ready:false,reason:'JWT_SECRET_REQUIRED'});return {ready:true,mode:demo?'demo':'anthropic',deepgram:!!process.env.DEEPGRAM_API_KEY}});
+app.post('/v1/ws-ticket',async(request,reply)=>{
+ const auth=request.headers.authorization?.match(/^Bearer (.+)$/i)?.[1];
+ if(!auth||!process.env.JWT_SECRET)return reply.code(401).send({error:'AUTH_REQUIRED'});
+ let userId='';try{const payload=jwt.verify(auth,process.env.JWT_SECRET) as {sub?:string};userId=payload.sub||'';}catch{return reply.code(401).send({error:'INVALID_TOKEN'});}
+ if(!userId)return reply.code(401).send({error:'INVALID_TOKEN'});
+ for(const [k,v] of tickets)if(v.expires<Date.now())tickets.delete(k);
+ if(tickets.size>1000)return reply.code(429).send({error:'TOO_MANY_TICKETS'});
+ const ticket=randomUUID();tickets.set(ticket,{expires:Date.now()+30000,userId});return {ticket,expires_in:30};
+});
 app.get('/v1/realtime',{websocket:true},(socket,request)=>{
  const ticket=(request.query as {ticket?:string}).ticket;
- if(!ticket||!tickets.has(ticket)||tickets.get(ticket)!<Date.now()){socket.close(1008,'Invalid or expired ticket');return}
+ if(!ticket||!tickets.has(ticket)||tickets.get(ticket)!.expires<Date.now()){socket.close(1008,'Invalid or expired ticket');return}
  tickets.delete(ticket);let active=false;let mode:'assist'|'translate'='assist';let paused=false;let revision=0;let context='';let targetLang='pt-BR';let previousText='';
  const send=(data:Record<string,unknown>)=>{if(socket.readyState===1)socket.send(JSON.stringify(data))};
  socket.on('message',async(raw,isBinary)=>{
