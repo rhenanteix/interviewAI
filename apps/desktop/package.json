@@ -1,0 +1,13 @@
+{
+  "name": "@copilot/desktop",
+  "version": "0.3.0",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "dev": "electron .",
+    "build": "node -e \"console.log('Desktop scaffold')\""
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}

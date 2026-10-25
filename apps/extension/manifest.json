@@ -1,0 +1,1 @@
+{"manifest_version":3,"name":"Copilot Live Companion","version":"0.3.0","description":"User-initiated tab audio capture companion","permissions":["tabCapture","activeTab","offscreen","storage"],"host_permissions":["http://localhost:3001/*","http://localhost:5173/*"],"action":{"default_popup":"popup.html"},"background":{"service_worker":"background.js"}}

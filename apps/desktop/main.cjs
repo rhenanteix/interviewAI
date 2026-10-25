@@ -1,0 +1,3 @@
+const {app,BrowserWindow,desktopCapturer,session}=require('electron');
+function create(){const win=new BrowserWindow({width:1100,height:800,webPreferences:{contextIsolation:true,nodeIntegration:false,sandbox:true}});win.loadURL(process.env.WEB_URL||'http://localhost:5173');}
+app.whenReady().then(()=>{session.defaultSession.setDisplayMediaRequestHandler(async(_request,callback)=>{const sources=await desktopCapturer.getSources({types:['screen','window']});if(sources[0])callback({video:sources[0],audio:'loopback'});},{useSystemPicker:true});create()});app.on('window-all-closed',()=>{if(process.platform!=='darwin')app.quit()});
