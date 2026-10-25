@@ -5,11 +5,16 @@
     "dev": "concurrently -k -n api,console,landing \"npm run dev -w @copilot/api\" \"npm run dev -w @copilot/web\" \"npm run dev -w @copilot/landing\"",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
   },
   "devDependencies": {
     "typescript": "^5.8.3",
-    "concurrently": "^9.2.0"
+    "concurrently": "^9.2.0",
+    "eslint": "^9.20.0",
+    "@eslint/js": "^9.20.0",
+    "globals": "^15.14.0",
+    "typescript-eslint": "^8.24.0"
   },
   "workspaces": [
     "apps/*",

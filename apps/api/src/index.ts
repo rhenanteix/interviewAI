@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
@@ -8,16 +9,36 @@ import {registerAudioStream} from './audio-stream.js';
 import { input } from '@copilot/shared';
 import { MockLlm,processTurn } from './pipeline.js';
 import { AnthropicProvider } from './provider.js';
-if(!process.env.JWT_SECRET||process.env.JWT_SECRET.length<32)throw new Error('JWT_SECRET must be configured with at least 32 characters');
-const app=Fastify({logger:true});await app.register(cors,{origin:(process.env.CORS_ORIGINS||'http://localhost:5173,http://localhost:5174').split(',')});await app.register(websocket);await registerPlatform(app);registerAudioStream(app);
-const tickets=new Map<string,{expires:number,userId:string}>();const llm=process.env.ANTHROPIC_API_KEY?new AnthropicProvider():new MockLlm();
-const demo=!process.env.ANTHROPIC_API_KEY;
+
+const envSchema = z.object({
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET deve ter pelo menos 32 caracteres'),
+  API_PORT: z.string().regex(/^\d+$/).transform(Number).optional().default('3001'),
+  CORS_ORIGINS: z.string().optional().default('http://localhost:5173,http://localhost:5174'),
+  DATA_FILE: z.string().optional().default('./data/local.json'),
+  DEEPGRAM_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_MODEL: z.string().optional().default('claude-haiku-4-5-20251001'),
+  VITE_API_URL: z.string().url().optional(),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  PUBLIC_URL: z.string().url().optional(),
+});
+
+const _env = envSchema.safeParse(process.env);
+if (!_env.success) {
+  const missing = _env.error.issues.map(i => i.path.join('.')).join(', ');
+  throw new Error(`Variáveis de ambiente inválidas ou faltando: ${missing}. Consulte .env.example.`);
+}
+const env = _env.data;
+
+const app=Fastify({logger:true});await app.register(cors,{origin:env.CORS_ORIGINS.split(',')});await app.register(websocket);await registerPlatform(app);registerAudioStream(app);
+const tickets=new Map<string,{expires:number,userId:string}>();const llm=env.ANTHROPIC_API_KEY?new AnthropicProvider():new MockLlm();
+const demo=!env.ANTHROPIC_API_KEY;
 app.get('/health',async()=>({status:'ok',mode:demo?'demo':'anthropic',time:new Date().toISOString()}));
-app.get('/ready',async(_req,reply)=>{const ok=Boolean(process.env.JWT_SECRET&&process.env.JWT_SECRET.length>=32);if(!ok)return reply.code(503).send({ready:false,reason:'JWT_SECRET_REQUIRED'});return {ready:true,mode:demo?'demo':'anthropic',deepgram:!!process.env.DEEPGRAM_API_KEY}});
+app.get('/ready',async(_req,reply)=>{const ok=Boolean(env.JWT_SECRET&&env.JWT_SECRET.length>=32);if(!ok)return reply.code(503).send({ready:false,reason:'JWT_SECRET_REQUIRED'});return {ready:true,mode:demo?'demo':'anthropic',deepgram:!!env.DEEPGRAM_API_KEY}});
 app.post('/v1/ws-ticket',async(request,reply)=>{
  const auth=request.headers.authorization?.match(/^Bearer (.+)$/i)?.[1];
- if(!auth||!process.env.JWT_SECRET)return reply.code(401).send({error:'AUTH_REQUIRED'});
- let userId='';try{const payload=jwt.verify(auth,process.env.JWT_SECRET) as {sub?:string};userId=payload.sub||'';}catch{return reply.code(401).send({error:'INVALID_TOKEN'});}
+ if(!auth||!env.JWT_SECRET)return reply.code(401).send({error:'AUTH_REQUIRED'});
+ let userId='';try{const payload=jwt.verify(auth,env.JWT_SECRET) as {sub?:string};userId=payload.sub||'';}catch{return reply.code(401).send({error:'INVALID_TOKEN'});}
  if(!userId)return reply.code(401).send({error:'INVALID_TOKEN'});
  for(const [k,v] of tickets)if(v.expires<Date.now())tickets.delete(k);
  if(tickets.size>1000)return reply.code(429).send({error:'TOO_MANY_TICKETS'});
@@ -43,4 +64,4 @@ app.get('/v1/realtime',{websocket:true},(socket,request)=>{
   }
  });
 });
-await app.listen({port:Number(process.env.API_PORT||3001),host:'0.0.0.0'});
+await app.listen({port:env.API_PORT,host:'0.0.0.0'});

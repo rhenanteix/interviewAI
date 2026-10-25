@@ -38,7 +38,8 @@ export function registerAudioStream(app:FastifyInstance){
   upstream.on('error',()=>send({type:'error',code:'STT_PROVIDER_ERROR'}));
   upstream.on('close',(code)=>{send({type:'audio_closed',code});if(client.readyState===WebSocket.OPEN)client.close(1012,'Upstream disconnected');});
   client.on('message',(raw,isBinary)=>{
-   if(isBinary){if(raw.length>64000||totalBytes>96000000){client.close(1009,'Audio quota exceeded');return;}totalBytes+=raw.length;if(upstream.readyState===WebSocket.OPEN)upstream.send(raw,{binary:true});else if(upstream.readyState===WebSocket.CONNECTING && queueBytes<64000){audioQueue.push(Buffer.from(raw));queueBytes+=raw.length;}return;}
+    const buf: Buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(raw as unknown as ArrayBuffer);
+    if(isBinary){if(buf.length>64000||totalBytes>96000000){client.close(1009,'Audio quota exceeded');return;}totalBytes+=buf.length;if(upstream.readyState===WebSocket.OPEN)upstream.send(buf as Uint8Array,{binary:true});else if(upstream.readyState===WebSocket.CONNECTING && queueBytes<64000){audioQueue.push(buf);queueBytes+=buf.length;}return;}
    try{const d=JSON.parse(raw.toString());if(d.type==='configure'){targetLang=['pt-BR','en','es','zh-CN'].includes(d.target_lang)?d.target_lang:'pt-BR';context=String(d.context||'').slice(0,12000);mode=d.mode==='translate'?'translate':'assist';}if(d.type==='stop'&&!ended){ended=true;if(upstream.readyState===WebSocket.OPEN)upstream.send(JSON.stringify({type:'CloseStream'}));}}catch{}
   });
   const keepAlive=setInterval(()=>{if(upstream.readyState===WebSocket.OPEN)upstream.send(JSON.stringify({type:'KeepAlive'}));},8000);
