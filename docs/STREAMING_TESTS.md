@@ -13,7 +13,7 @@ No Windows PowerShell: `Copy-Item .env.example .env`.
 
 Configure `DEEPGRAM_API_KEY` e `JWT_SECRET` em `.env`. O processo Node deve carregar o arquivo: 
 
-Execute `npm run dev` na raiz (a API lê automaticamente o `.env` da raiz). Em sistemas em que o script paralelo não funcionar, use dois terminais: `npm run dev --workspace @copilot/api` e `npm run dev --workspace @copilot/web`.
+Execute `npm run dev` na raiz (a API lê automaticamente o `.env` da raiz). Em sistemas em que o script paralelo não funcionar, use dois terminais: `npm run dev --workspace @interviewia/api` e `npm run dev --workspace @interviewia/web`.
 
 Frontend http://localhost:5173; API http://localhost:3001; Swagger http://localhost:3001/docs.
 

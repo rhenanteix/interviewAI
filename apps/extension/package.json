@@ -1,1 +1,17 @@
-{"name":"@copilot/extension","version":"0.1.0","type":"module","private":true,"scripts":{"typecheck":"tsc --noEmit","test":"vitest run","build":"node build.mjs"},"devDependencies":{"esbuild":"^0.28.2","typescript":"^5.8.3","vitest":"^3.1.1"}}
+{
+  "name": "@interviewia/extension",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vite": "^6.3.0",
+    "vitest": "^3.1.1"
+  }
+}

@@ -1,40 +1,50 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>InterviewIA — Legendas ao vivo</title><style>
-* { box-sizing: border-box; }
-body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 12px; width: 420px; background: #0b0c10; color: #eaeaea; }
-h1 { margin: 0 0 8px; font-size: 16px; letter-spacing: 0.4px; }
-.toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
-button { cursor: pointer; border: 1px solid #374151; background: #1f2937; color: #e5e7eb; padding: 6px 10px; border-radius: 6px; font: inherit; font-size: 13px; }
-button:disabled { opacity: 0.5; cursor: not-allowed; border-color: #4b5563; }
-button.ativa { background: #dc2626; border-color: #991b1b; }
-label { font-size: 12px; color: #9ca3af; margin-right: 6px; }
-select { background: #111827; border: 1px solid #374151; color: #e5e7eb; padding: 4px 6px; border-radius: 4px; font: inherit; font-size: 13px; }
-#status { font-size: 12px; color: #9ca3af; min-height: 16px; margin-bottom: 8px; }
-.panels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-section { border: 1px solid #1f2937; border-radius: 8px; padding: 8px; background: #111827; }
-h3 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; color: #9ca3af; }
-.transcript, .translation { font-size: 14px; line-height: 1.5; min-height: 90px; overflow-wrap: break-word; }
-.transcript { color: #bbf7d0; }
-.translation { color: #bfdbfe; }
-.frente { border-left: 3px solid #bbf7d0; padding-left: 6px; }
-.memo { font-size: 11px; color: #6b7280; margin-top: 10px; border-top: 1px solid #1f2937; padding-top: 8px; }
-</style></head><body>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>InterviewIA — Legendas ao vivo</title></head><body>
+  <div id="consentModal" class="modal">
+    <div class="modal-card">
+      <h2>Consentimento de áudio</h2>
+      <p>A InterviewIA captura o áudio da aba atual para gerar legendas ao vivo. O áudio é processado em tempo real e <strong>não é armazenado nem enviado para terceiros sem sua chave de provedor configurada</strong>. Nenhuma transcrição ou áudio fica persistida por padrão.</p>
+      <p>Ao aceitar, você permite a captura de áudio da aba para este propósito.</p>
+      <div class="modal-actions">
+        <button id="btnConsentAccept" class="btn-primary">Aceitar e continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="app" style="display:none;">
   <div class="toolbar">
     <h1>InterviewIA</h1>
-    <label>Traduzir para <select id="targetLang"><option value="en">Inglês</option><option value="pt-BR">Português</option><option value="es">Espanhol</option></select></label>
     <button id="btnStart">Iniciar captura de aba</button>
     <button id="btnStop" disabled>Parar</button>
+    <button id="btnClear" class="btn-danger">Apagar dados locais</button>
   </div>
   <div id="status">Pronto. Abra a aba da entrevista e clique em Iniciar.</div>
+  <div id="capturingIndicator" class="indicator escondido" role="status" aria-label="Capturando áudio da aba">
+    <span class="indicator-dot"></span>
+    <strong>Capturando áudio da aba</strong>
+  </div>
+  <div id="connectionState" class="chip desconhecido">Desconectado</div>
+  <div class="level-meter">
+    <label>Nível de áudio</label>
+    <div class="level-bar"><div id="levelFill" class="level-fill"></div></div>
+    <span id="levelValue">0%</span>
+  </div>
+  <div id="latency" class="latency-card">
+    <div class="latency-item"><span class="latency-label">STT</span><span id="latStt">—</span> ms</div>
+    <div class="latency-item"><span class="latency-label">Tradução</span><span id="latTrans">—</span> ms</div>
+    <div class="latency-item"><span class="latency-label">Total</span><span id="latTotal">—</span> ms</div>
+  </div>
   <div class="panels">
-    <section>
-      <h3>Legenda original</h3>
+    <section class="panel-original">
+      <h3>Legenda original (ao vivo)</h3>
       <div id="transcript" class="transcript"></div>
+      <div id="partialLine" class="partial-line"></div>
     </section>
-    <section>
+    <section class="panel-translation">
       <h3>Tradução ao vivo</h3>
       <div id="translation" class="translation"></div>
     </section>
   </div>
-  <p class="memo">Modo demo local: provedores simulados, sem chaves de API, sem persistência de áudio ou transcrição.</p>
-  <script type="module" src="sidepanel.js"></script>
+  <p class="memo">MVP: áudio enviado para a API via WebSocket; legendas geradas pelo servidor. Nada é persistido por padrão.</p>
+  <script type="module" src="sidepanel.ts"></script>
+  </div>
 </body></html>

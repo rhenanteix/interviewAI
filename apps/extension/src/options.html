@@ -1,0 +1,28 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Opções — InterviewIA</title></head><body>
+  <h1>Opções — InterviewIA</h1>
+  <form id="form">
+    <label>
+      URL da API:
+      <input type="url" id="apiUrl" name="apiUrl" required placeholder="http://localhost:3001" />
+    </label>
+    <label>
+      Idioma de origem:
+      <select id="sourceLang" name="sourceLang">
+        <option value="pt-BR">Português (pt-BR)</option>
+        <option value="en">Inglês (en)</option>
+        <option value="es">Espanhol (es)</option>
+      </select>
+    </label>
+    <label>
+      Idioma de destino:
+      <select id="targetLang" name="targetLang">
+        <option value="en">Inglês (en)</option>
+        <option value="pt-BR">Português (pt-BR)</option>
+        <option value="es">Espanhol (es)</option>
+      </select>
+    </label>
+    <button type="submit">Salvar</button>
+  </form>
+  <p id="msg"></p>
+  <script type="module" src="options.ts"></script>
+</body></html>

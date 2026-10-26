@@ -10,5 +10,27 @@ services:
   redis:
     image: redis:7-alpine
     ports: ["6379:6379"]
+  whisper:
+    profiles: ["local"]
+    image: ghcr.io/ggerganov/whisper.cpp:server
+    ports: ["8080:8080"]
+    volumes:
+      - whisper-models:/models
+    environment:
+      WHISPER_MODEL: /models/ggml-base.bin
+    command:
+      - -m
+      - /models/ggml-base.bin
+      - -c
+      - "512"
+      - -t
+      - "4"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 volumes:
   pgdata:
+  whisper-models:

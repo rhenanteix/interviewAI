@@ -1,5 +1,5 @@
 {
-  "name": "@copilot/web",
+  "name": "@interviewia/web",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@copilot/shared": "*",
+    "@interviewia/shared": "*",
     "@vitejs/plugin-react": "^4.4.1",
     "vite": "^6.3.0",
     "typescript": "^5.8.3",

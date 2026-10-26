@@ -2,7 +2,7 @@
   "name": "interviewia",
   "private": true,
   "scripts": {
-    "dev": "concurrently -k -n api,console,landing \"npm run dev -w @copilot/api\" \"npm run dev -w @copilot/web\" \"npm run dev -w @copilot/landing\"",
+    "dev": "concurrently -k -n api,console,landing \"npm run dev -w @interviewia/api\" \"npm run dev -w @interviewia/web\" \"npm run dev -w @interviewia/landing\"",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",

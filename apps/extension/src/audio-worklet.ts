@@ -1,4 +1,5 @@
 export const TARGET_SAMPLE_RATE = 16000;
+export const CHUNK_SAMPLES = 1600; // ~100 ms a 16 kHz
 
 export function toMonoFloat32(canais: Float32Array[]): Float32Array {
   const quadros = canais[0].length;
@@ -9,6 +10,12 @@ export function toMonoFloat32(canais: Float32Array[]): Float32Array {
     saida[i] = soma / canais.length;
   }
   return saida;
+}
+
+export function rmsLevel(amostras: Float32Array): number {
+  let soma = 0;
+  for (let i = 0; i < amostras.length; i++) soma += amostras[i] * amostras[i];
+  return Math.sqrt(soma / amostras.length);
 }
 
 export function resampleTo(entrada: Float32Array, deTaxa: number, paraTaxa: number): Float32Array {
@@ -44,15 +51,13 @@ function concatenar(a: Float32Array, b: Float32Array): Float32Array {
   return saida;
 }
 
-type AudioWorkletProcessorCtor = new (...args: unknown[]) => {
-  port: { postMessage: (mensagem: unknown) => void };
-  sampleRate: number;
-  process(entradas: unknown[], saidas: unknown[], parametros: unknown): boolean;
-};
-
 const workletGlobal = globalThis as unknown as {
-  AudioWorkletProcessor?: AudioWorkletProcessorCtor;
-  registerProcessor?: (nome: string, processador: AudioWorkletProcessorCtor) => void;
+  AudioWorkletProcessor?: new (...args: unknown[]) => {
+    port: { postMessage: (mensagem: unknown) => void };
+    sampleRate: number;
+    process(entradas: unknown[], saidas: unknown[], parametros: unknown): boolean;
+  };
+  registerProcessor?: (nome: string, processador: unknown) => void;
 };
 
 if (workletGlobal.AudioWorkletProcessor && workletGlobal.registerProcessor) {
@@ -77,12 +82,15 @@ if (workletGlobal.AudioWorkletProcessor && workletGlobal.registerProcessor) {
       const remixado = resampleTo(mono, (this as unknown as { sampleRate: number }).sampleRate, TARGET_SAMPLE_RATE);
       this.buffer = concatenar(this.buffer, remixado);
 
-      while (this.buffer.length >= TARGET_SAMPLE_RATE) {
-        const quadro = this.buffer.subarray(0, TARGET_SAMPLE_RATE);
-        this.buffer = this.buffer.subarray(TARGET_SAMPLE_RATE);
-        (this as unknown as { port: { postMessage: (mensagem: { pcm16: Int16Array; sampleRate: number }) => void } }).port.postMessage({
-          pcm16: float32ToPcm16(quadro).slice(),
+      while (this.buffer.length >= CHUNK_SAMPLES) {
+        const quadro = this.buffer.subarray(0, CHUNK_SAMPLES);
+        this.buffer = this.buffer.subarray(CHUNK_SAMPLES);
+        const pcm16 = float32ToPcm16(quadro);
+        const nivel = rmsLevel(quadro);
+        (this as unknown as { port: { postMessage: (mensagem: { pcm16: Int16Array; sampleRate: number; level: number }) => void } }).port.postMessage({
+          pcm16,
           sampleRate: TARGET_SAMPLE_RATE,
+          level: nivel,
         });
       }
 

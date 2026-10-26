@@ -55,3 +55,38 @@ export type TranslationSegment = {
   targetLang: 'pt-BR' | 'en' | 'es';
   sourceLang?: 'pt-BR' | 'en' | 'es';
 };
+
+// --- Contratos da API WebSocket (/v1/session e /v1/stream) ---
+
+export const apiSessionRequest = z.object({});
+
+export const apiSessionResponse = z.object({
+  token: z.string(),
+  expires_in: z.number(),
+});
+
+export const apiStreamMessageIn = z.object({
+  type: z.enum(['configure', 'stop']),
+  target_lang: z.enum(['pt-BR', 'en', 'es']).optional(),
+  context: z.string().max(12000).optional(),
+});
+
+export const apiStreamEventOut = z.object({
+  type: z.enum(['partial', 'final', 'error', 'audio_ready', 'audio_closed', 'translated']),
+  text: z.string().optional(),
+  lang: z.string().optional(),
+  code: z.string().optional(),
+  at: z.number().optional(),
+  original: z.string().optional(),
+  translated: z.string().optional(),
+  sttLatency_ms: z.number().optional(),
+  translationLatency_ms: z.number().optional(),
+  totalLatency_ms: z.number().optional(),
+});
+
+export type ApiSessionRequest = z.infer<typeof apiSessionRequest>;
+export type ApiSessionResponse = z.infer<typeof apiSessionResponse>;
+export type ApiStreamMessageIn = z.infer<typeof apiStreamMessageIn>;
+export type ApiStreamEventOut = z.infer<typeof apiStreamEventOut>;
+
+export type ConnectionState = 'disconnected' | 'conectando' | 'ouvindo' | 'erro' | 'pausado';

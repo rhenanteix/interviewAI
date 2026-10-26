@@ -13,28 +13,31 @@ Fastify, WebSocket, Zod, Drizzle, PostgreSQL/pgvector, Redis.
 ## O que é
 
 O InterviewIA captura áudio do microfone (ou aba/sistema), transmite para um
-provedor de STT (Deepgram), traduz e gera sugestões de resposta contextualizadas
-(Anthropic ou modo demo simulado). Tudo roda localmente ou em containers Docker,
-sem enviar dados para terceiros sem o seu consentimento.
+provedor de STT (Deepgram ou Whisper local), traduz e gera sugestões de resposta
+contextualizadas (Anthropic ou modo demo simulado). Tudo roda localmente ou em
+containers Docker, sem enviar dados para terceiros sem o seu consentimento.
 
 ### Principais funcionalidades
 
-- Transcrição de áudio em tempo real via WebSocket.
-- Tradução entre português, inglês e espanhol.
+- Transcrição de áudio em tempo real via WebSocket (Deepgram STT ou Whisper local).
+- Tradução entre português, inglês e espanhol (modo demo ou Anthropic).
 - Modo assistência: sugestões de resposta para perguntas de entrevista.
-- Persistência local de sessões, perfis e histórico.
+- **Chrome Extension (MV3)**: captura de áudio da aba via side panel, indicador visual
+  de captura, consentimento obrigatório no primeiro uso e botão de apagar dados locais.
+- Persistência local de sessões, perfis e histórico (opcional, desativada por padrão).
 - API REST com Swagger (`/docs`) e WebSocket para áudio em tempo real.
 - Docker Compose com PostgreSQL/pgvector e Redis.
+- **Nada é persistido por padrão**: áudio e transcrições não são gravados em disco.
 
 ---
 
 ## Demo
 
-![Demo do InterviewIA](https://via.placeholder.com/800x450?text=Demo+do+InterviewIA)
+![Demo do InterviewIA](docs/demo.gif)
 
-> Substitua este placeholder por um GIF real da aplicação em execução.
-> Grave uma sessão curta (transcrição → tradução → sugestão de resposta) e
-> coloque o arquivo em `docs/demo.gif`, atualizando o link acima.
+> Coloque um GIF real da aplicação em execução em `docs/demo.gif` e atualize o link acima.
+> Sugestão: grave uma sessão curta (consentimento → captura de aba → transcrição →
+> tradução → sugestão de resposta) com aproximadamente 800x450 px.
 
 ---
 
@@ -54,6 +57,14 @@ Abra:
 
 Configure `JWT_SECRET` (32+ caracteres) no `.env` antes de iniciar a API.
 
+### Carregar a extensão Chrome (MV3)
+
+1. `npm run build --workspace @interviewia/extension` (gera `apps/extension/dist`)
+2. Acesse `chrome://extensions/` no Chrome/Edge
+3. Ative "Modo do desenvolvedor"
+4. Clique "Carregar sem compactação" e selecione `apps/extension/dist`
+5. Abra o painel lateral da extensão ao lado de uma aba com áudio/vídeo
+
 ---
 
 ## Tabela de status
@@ -62,12 +73,17 @@ Configure `JWT_SECRET` (32+ caracteres) no `.env` antes de iniciar a API.
 |------------|--------|------------|
 | API Fastify + WebSocket | ✅ | Funcional (modo demo sem chaves) |
 | Transcrição STT (Deepgram) | ⚠️ | Requer `DEEPGRAM_API_KEY` |
+| Transcrição STT (Whisper local) | ⚠️ | Requer container whisper.cpp, `WHISPER_URL` |
 | Tradução/LLM (Anthropic) | ⚠️ | Requer `ANTHROPIC_API_KEY` |
 | Autenticação JWT | ✅ | Persistência JSON local (não produção) |
 | Persistência PostgreSQL | ⚠️ | Docker Compose disponível, não conectado por padrão |
 | Microfone virtual | ❌ | Não implementado |
-| Apps desktop/extensão | ❌ | Scaffolds |
+| Apps desktop/extensão | ⚠️ | Extensão MV3 funcional (side panel); desktop em scaffold |
 | Cobrança (Stripe) | ❌ | Modo mock |
+| Consentimento de áudio (primeiro uso) | ✅ | Obrigatório, salvo em `chrome.storage.local` |
+| Indicador "capturando áudio da aba" | ✅ | Visível no painel lateral durante a captura |
+| Apagar dados locais | ✅ | Botão no painel lateral; limpa storage + localStorage |
+| Persistência de áudio/transcrição | ❌ | Nada é persistido por padrão |
 
 ---
 
@@ -85,8 +101,20 @@ Fastify API (localhost:3001)
    │
    ├─ Anthropic (LLM: tradução + resposta)
    ├─ Deepgram (STT: streaming de áudio)
+   ├─ Whisper local (STT: via whisper.cpp container)
    ├─ PostgreSQL/pgvector (via Docker Compose)
    └─ Redis (cache/filas)
+```
+
+Extensão Chrome MV3:
+```
+Side panel (React/Vite-like TS)
+   │ chrome.runtime.sendMessage
+   ▼
+Service worker (background)
+   ├─ tabCapture.getMediaStreamId
+   ├─ offscreen.createDocument (AUDIO_PLAYBACK)
+   └─ AudioWorklet + PCM16 16 kHz mono → API WebSocket
 ```
 
 Detalhes em `docs/ARCHITECTURE.md` e `docs/PLAN.md`.
@@ -106,15 +134,21 @@ terceiros sem consentimento explícito.
 Em desenvolvimento, em arquivo JSON local (`DATA_FILE`). Em produção, migre
 para PostgreSQL com sessões em cookies `HttpOnly` e criptografia em repouso.
 
+**O áudio do microfone/aba sai do meu computador?**
+
+Somente quando você inicia uma sessão de streaming e há uma chave Deepgram ou
+Whisper local configurada. Caso contrário, nada é enviado para a rede.
+
+**O áudio e as transcrições são persistidos?**
+
+Não por padrão. A extensão não grava áudio nem transcrições em disco. O botão
+"Apagar dados locais" limpa qualquer configuração armazenada em
+`chrome.storage.local` e `localStorage`.
+
 **Posso excluir meus dados?**
 
 Sim. Use `DELETE /api/v1/me` para remover conta e registros associados, ou
-exporte via `GET /api/v1/export`.
-
-**O áudio do microfone sai do meu computador?**
-
-Somente quando você inicia uma sessão de streaming e há uma chave Deepgram
-configurada. Caso contrário, nada é enviado para a rede.
+exporte via `GET /api/v1/export`. Na extensão, use "Apagar dados locais".
 
 **Este projeto está em conformidade com LGPD/GDPR?**
 

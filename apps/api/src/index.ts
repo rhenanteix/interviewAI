@@ -6,7 +6,8 @@ import { randomUUID } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import {registerPlatform} from './platform.js';
 import {registerAudioStream} from './audio-stream.js';
-import { input } from '@copilot/shared';
+import {registerStream} from './stream.js';
+import { input } from '@interviewia/shared';
 import { MockLlm,processTurn } from './pipeline.js';
 import { AnthropicProvider } from './provider.js';
 
@@ -30,7 +31,7 @@ if (!_env.success) {
 }
 const env = _env.data;
 
-const app=Fastify({logger:true});await app.register(cors,{origin:env.CORS_ORIGINS.split(',')});await app.register(websocket);await registerPlatform(app);registerAudioStream(app);
+const app=Fastify({logger:true});await app.register(cors,{origin:env.CORS_ORIGINS.split(',')});await app.register(websocket);await registerPlatform(app);registerAudioStream(app);registerStream(app);
 const tickets=new Map<string,{expires:number,userId:string}>();const llm=env.ANTHROPIC_API_KEY?new AnthropicProvider():new MockLlm();
 const demo=!env.ANTHROPIC_API_KEY;
 app.get('/health',async()=>({status:'ok',mode:demo?'demo':'anthropic',time:new Date().toISOString()}));

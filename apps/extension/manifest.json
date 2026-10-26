@@ -3,9 +3,10 @@
   "name": "InterviewIA Live",
   "version": "0.1.0",
   "description": "Captura de áudio da aba, STT streaming e legendas ao vivo no painel lateral",
-  "permissions": ["tabCapture", "offscreen", "sidePanel", "storage"],
+  "permissions": ["tabCapture", "offscreen", "sidePanel", "storage", "activeTab"],
   "host_permissions": ["http://localhost:3001/*"],
   "action": { "default_popup": "popup.html" },
   "side_panel": { "default_path": "sidepanel.html" },
+  "options_page": "options.html",
   "background": { "service_worker": "background.js", "type": "module" }
 }
