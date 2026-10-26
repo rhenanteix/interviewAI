@@ -4,3 +4,4 @@ export const control = z.object({ type:z.literal('control'), action:z.enum(['pau
 export const input = z.discriminatedUnion('type',[sessionStart,control,z.object({type:z.literal('stop')}),z.object({type:z.literal('text'),text:z.string().min(1).max(10000),lang:z.string().optional()})]);
 export type ClientMessage = z.infer<typeof input>;
 export type ServerMessage = {type:'session'|'status'|'heard'|'translation'|'answer'|'done'|'error';[key:string]:unknown};
+export * from './extension.js';
