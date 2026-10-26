@@ -1,0 +1,33 @@
+{
+  "users": [
+    {
+      "id": "93a33a91-d3ec-43dc-8174-5c5d87530831",
+      "email": "rhenancontato@gmail.com",
+      "name": "Rhenan",
+      "passwordHash": "$2a$12$UlTpyJFngdbbKDrLK.h9/uRKkBOXnfGdvon9okr2XCa2km5gc9Ble",
+      "createdAt": "2026-10-26T14:01:37.910Z"
+    }
+  ],
+  "profiles": [],
+  "documents": [],
+  "sessions": [],
+  "workspaces": [
+    {
+      "id": "4069b3dd-9077-48ec-992e-2c505d1e5ce2",
+      "name": "My Workspace",
+      "ownerId": "93a33a91-d3ec-43dc-8174-5c5d87530831"
+    }
+  ],
+  "memberships": [
+    {
+      "id": "62e7c89d-3a3d-4ef7-a288-e2654d7a6a3d",
+      "userId": "93a33a91-d3ec-43dc-8174-5c5d87530831",
+      "workspaceId": "4069b3dd-9077-48ec-992e-2c505d1e5ce2",
+      "role": "owner"
+    }
+  ],
+  "subscriptions": [],
+  "integrations": [],
+  "webhooks": [],
+  "audit": []
+}

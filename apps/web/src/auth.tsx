@@ -1,5 +1,5 @@
 import React,{useEffect,useState} from 'react';
-const API=import.meta.env.VITE_API_URL||'http://localhost:3001';
+import {API} from './api';
 type User={id:string;name:string;email:string};
 export function AuthGate({children}:{children:React.ReactNode}){
  const [user,setUser]=useState<User|null>(null),[checking,setChecking]=useState(true),[mode,setMode]=useState<'login'|'register'>('register');
